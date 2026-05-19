@@ -82,7 +82,11 @@
   function detectSocialLinks() {
     const platforms = [
       { key: 'facebook',  patterns: [/facebook\.com\/(?!sharer|share|dialog|plugins|events|groups|pages\/category|legal|policies|help|privacy|terms|ads|business|watch|marketplace|gaming|video)([a-zA-Z0-9._%-]{2,})/i] },
-      { key: 'instagram', patterns: [/instagram\.com\/([a-zA-Z0-9._]{2,})\/?/i] },
+      { key: 'instagram', patterns: [
+        /instagram\.com\/([a-zA-Z0-9._]{2,})/i,
+        /ig\.me\/(?:m\/)?([a-zA-Z0-9._]{2,})/i,
+        /instagram:\/\/user\?username=([a-zA-Z0-9._]{2,})/i
+      ] },
       { key: 'tiktok',   patterns: [/tiktok\.com\/@([a-zA-Z0-9._]{2,})\/?/i, /tiktok\.com\/([a-zA-Z0-9._]{2,})\/?/i] },
       { key: 'pinterest', patterns: [/pinterest\.com\/([a-zA-Z0-9._-]{2,})\/?/i] },
       { key: 'youtube',  patterns: [/youtube\.com\/(?:channel\/|c\/|user\/|@)([a-zA-Z0-9._-]{2,})\/?/i] },
@@ -91,18 +95,37 @@
     ];
 
     // Excluded terms that are platform-level (not store accounts)
-    const excluded = /^(www|shop|home|about|login|signup|help|support|search|explore|discover|trending|reels|stories|video|videos|live|hashtag|tags?|music|sounds?|effects?|upload|create|business|ads|advertising|developers?|policies|legal|privacy|terms|safety|guidelines|blog|news|press|careers?|jobs?|events?|places?|groups?|pages?|fundraisers?|gaming|marketplace|watch|creator|creators?|studio|analytics|dashboard)$/i;
+    const excluded = /^(www|shop|home|about|login|signup|help|support|search|explore|discover|trending|reels?|stories|video|videos|live|hashtag|tags?|music|sounds?|effects?|upload|create|business|ads|advertising|developers?|policies|legal|privacy|terms|safety|guidelines|blog|news|press|careers?|jobs?|events?|places?|groups?|pages?|fundraisers?|gaming|marketplace|watch|creator|creators?|studio|analytics|dashboard|p|direct)$/i;
 
     const hrefs = Array.from(document.querySelectorAll('a[href]'))
       .map(a => a.href)
       .filter(Boolean);
 
     // Also check meta og:url and other meta tags
-    const metaUrls = Array.from(document.querySelectorAll('meta[content]'))
-      .map(m => m.content)
-      .filter(c => c && /^https?:/.test(c));
+    const metaContents = Array.from(document.querySelectorAll('meta'))
+      .map(m => m.getAttribute('content') || m.getAttribute('value') || m.getAttribute('name') || m.getAttribute('property'))
+      .filter(Boolean);
 
-    const allUrls = [...hrefs, ...metaUrls];
+    // Also check link elements
+    const linkHrefs = Array.from(document.querySelectorAll('link[href]'))
+      .map(l => l.href)
+      .filter(Boolean);
+
+    // Scan raw HTML text for any instagram / ig.me URLs to be absolutely comprehensive
+    const textUrls = [];
+    try {
+      const htmlText = document.documentElement.innerHTML;
+      const igRegex = /(?:instagram\.com\/|ig\.me\/|instagram:\/\/user\?username=)([a-zA-Z0-9._]{2,})/gi;
+      let match;
+      while ((match = igRegex.exec(htmlText)) !== null) {
+        const handle = match[1];
+        if (!excluded.test(handle) && handle.length >= 2) {
+          textUrls.push(`https://www.instagram.com/${handle}`);
+        }
+      }
+    } catch (e) {}
+
+    const allUrls = [...hrefs, ...metaContents, ...linkHrefs, ...textUrls];
     const found = {};
 
     for (const { key, patterns } of platforms) {
@@ -113,7 +136,11 @@
           if (m) {
             const handle = m[1];
             if (!excluded.test(handle) && handle.length >= 2) {
-              found[key] = href.split('?')[0].replace(/\/$/, '');
+              if (key === 'instagram') {
+                found[key] = `https://www.instagram.com/${handle}`;
+              } else {
+                found[key] = href.split('?')[0].replace(/\/$/, '');
+              }
               break;
             }
           }
