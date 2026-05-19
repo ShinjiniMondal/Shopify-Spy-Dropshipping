@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreSight</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- View: Main -->
+  <div id="view-main" class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="icon">🔍</span>
+        <h1>StoreSight</h1>
+      </div>
+      <div class="badge">Pro Token</div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading" class="state-view">
+      <div class="spinner"></div>
+      <p>Analyzing store data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="state-view hidden">
+      <div class="icon">❌</div>
+      <p id="error-message">Not a valid Shopify store.</p>
+    </div>
+
+    <!-- Main Content (Hidden by default) -->
+    <main id="main-content" class="hidden">
+      <!-- Hero Section -->
+      <section class="card hero-section-modern" style="max-width: 100%; box-sizing: border-box; overflow: hidden;">
+        <div class="hero-image-modern">
+          <img id="store-screenshot" src="" alt="Store Screenshot">
+        </div>
+        <div class="hero-right-modern" style="display: flex; flex-direction: column; gap: 8px; width: 100%; box-sizing: border-box; padding: 12px; overflow: hidden; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px; min-width: 0; width: 100%;">
+            <img id="store-favicon" src="" style="width:32px; height:32px; border-radius:8px; object-fit:contain; flex-shrink: 0;">
+            <span id="store-display-name" style="font-size: 16px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;"></span>
+          </div>
+          <div style="display: flex; align-items: center; min-width: 0;">
+            <a id="store-domain" href="#" target="_blank" style="color: #c94f6d; font-size: 13px; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1;">example.com</a>
+            <button id="copy-domain" class="icon-btn" title="Copy Domain" style="margin-left: 6px; flex-shrink: 0;">📋</button>
+          </div>
+          <div style="font-size: 13px; color: gray; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            Shopify Theme: <span id="store-theme" style="color:#c94f6d;">Detecting...</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; width: 100%;">
+            <button class="btn primary btn-track" style="flex: 1 1 calc(50% - 4px); border: 1.5px solid #4caf50; color: #4caf50; background: white; border-radius: 8px; padding: 6px 12px; font-size: 12px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 110px;">
+              🔔 Track Shop
+            </button>
+            <button id="btn-use-theme-new" style="flex: 1 1 calc(50% - 4px); background: #c94f6d; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; justify-content: center; min-width: 110px;">
+              🛍 Use Theme
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="ai-chat-card">
+        <div class="ai-header">
+          <span>AI CHAT</span>
+          <span class="info-icon">i</span>
+        </div>
+      
+        <div class="ai-input-container">
+          <input 
+            id="aiInput"
+            type="text" 
+            placeholder="Ask me anything..." 
+          />
+          <button id="aiSendBtn">↑</button>
+        </div>
+      </div>
+
+      <!-- Tracked Shops Section -->
+      <section class="card tracked-preview-section">
+        <div class="section-header">
+          <h3>📌 Tracked Shops</h3>
+          <button id="btn-all-tracked" class="btn-link">See All &gt;</button>
+        </div>
+        <div id="tracked-preview-container" class="tracked-preview-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Traffic Preview Section -->
+      <section class="card traffic-preview-section">
+        <div class="section-header">
+          <h3>📈 Website Traffic</h3>
+          <button id="btn-all-traffic" class="btn-link">All Website Traffic &gt;</button>
+        </div>
+        <div id="traffic-preview-chart" class="svg-chart-container">
+           <div class="spinner" style="margin: 30px auto; width: 20px; height: 20px;"></div>
+        </div>
+      </section>
+
+      <!-- Ad Campaigns Section -->
+      <section class="card ads-preview-section">
+        <div class="section-header">
+          <h3>📢 Ad Campaigns <span class="info-icon" title="Detected active ads for this store">ℹ️</span></h3>
+        </div>
+        <div class="ads-columns">
+          <div class="ad-col">
+            <span class="platform-icon" style="color: #ea4335">G</span>
+            <span class="platform-name">GOOGLE</span>
+            <span class="platform-count" id="ads-count-google">5 Ads</span>
+          </div>
+          <div class="ad-col">
+            <span class="platform-icon" style="color: #1877F2">f</span>
+            <span class="platform-name">FACEBOOK</span>
+            <span class="platform-count" id="ads-count-facebook">30 Ads</span>
+          </div>
+          <div class="ad-col">
+            <span class="platform-icon" style="color: #E4405F">📷</span>
+            <span class="platform-name">INSTAGRAM</span>
+            <span class="platform-count" id="ads-count-instagram">30 Ads</span>
+          </div>
+        </div>
+        <button id="btn-all-ads" class="btn-link full-width-btn">All Ad Campaigns &gt;</button>
+      </section>
+
+      <!-- Shop History Section -->
+      <section class="card history-preview-section">
+        <div class="section-header">
+          <h3>🕒 Your Shop History</h3>
+          <button id="btn-all-history" class="btn-link">See All &gt;</button>
+        </div>
+        <div id="history-preview-scroll" class="recommended-scroll">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- App Discounts Section -->
+      <section class="card discounts-preview-section">
+        <div class="section-header">
+          <h3>🎁 App Discounts <span class="info-icon" title="Exclusive discounts on Shopify apps">ℹ️</span></h3>
+        </div>
+        <div class="discounts-list">
+          <!-- Populated by JS -->
+        </div>
+        <button id="btn-all-discounts" class="btn-link full-width-btn">All App Discounts &gt;</button>
+      </section>
+
+      <!-- Live Trends Section -->
+      <section class="card trends-section">
+        <div class="section-header">
+          <h3>🔥 Live Trends</h3>
+          <button class="btn-link">All Live Trends &gt;</button>
+        </div>
+        <div id="trends-loader" class="skeleton-list">
+          <div class="skeleton-trend"></div>
+          <div class="skeleton-trend"></div>
+        </div>
+        <div id="trends-container" class="trends-list hidden">
+          <!-- Populated by JS -->
+        </div>
+        <div id="trends-fallback" class="hidden fallback-msg">Not enough data to compute trends</div>
+      </section>
+
+      <!-- Recommended Shops Section -->
+      <section class="card recommended-section">
+        <div class="section-header">
+          <h3>💡 Recommended Shops</h3>
+          <div class="scroll-indicators">
+            <span class="icon">&lt;</span>
+            <span class="icon">&gt;</span>
+          </div>
+        </div>
+        <div id="recs-loader" class="skeleton-scroll">
+          <div class="skeleton-rec"></div>
+          <div class="skeleton-rec"></div>
+          <div class="skeleton-rec"></div>
+        </div>
+        <div id="recs-container" class="recommended-scroll hidden">
+          <!-- Populated by JS -->
+        </div>
+        <div id="recs-fallback" class="hidden fallback-msg">No similar stores found</div>
+      </section>
+
+      <!-- Stats Grid -->
+      <section class="grid-section-modern">
+        <div class="stat-card-modern">
+          <span class="stat-label-modern">Category</span>
+          <span id="stat-category" class="stat-value-modern tag-pill">Unknown</span>
+        </div>
+        <div class="stat-card-modern">
+          <span class="stat-label-modern">Products</span>
+          <span id="stat-products" class="stat-value-modern highlight-num">-</span>
+        </div>
+        <div class="stat-card-modern">
+          <span class="stat-label-modern">Since</span>
+          <span id="stat-age" class="stat-value-modern">Data not available</span>
+        </div>
+        <div class="stat-card-modern">
+          <span class="stat-label-modern">Last update</span>
+          <span id="stat-updated" class="stat-value-modern">-</span>
+        </div>
+      </section>
+
+      <!-- Store Details Section -->
+      <section class="details-grid-modern">
+        <div class="detail-card-modern card">
+          <span class="detail-icon">💰</span>
+          <span class="detail-label">Currency</span>
+          <span id="loc-currency" class="detail-value">-</span>
+        </div>
+        <div class="detail-card-modern card">
+          <span class="detail-icon">🌍</span>
+          <span class="detail-label">Country</span>
+          <span id="loc-country" class="detail-value">-</span>
+        </div>
+        <div class="detail-card-modern card">
+          <span class="detail-icon">🗣️</span>
+          <span class="detail-label">Language</span>
+          <span id="loc-language" class="detail-value">-</span>
+        </div>
+      </section>
+
+      <!-- Apps Section -->
+      <section class="card apps-section" style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 12px; color: gray; text-transform: uppercase; font-weight: 600;">APPS ⓘ</div>
+        <div id="apps-container" class="tags-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <!-- Populated by JS -->
+        </div>
+        <button id="btn-open-apps-view" style="width: 100%; border: 1.5px solid #c94f6d; color: #c94f6d; background: white; border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 4px; text-align: center;">
+          All Shopify Apps &gt;
+        </button>
+      </section>
+
+      <!-- Products Section -->
+      <section class="card products-section">
+        <h3>Recent Products</h3>
+        <div id="products-grid" class="products-grid">
+          <!-- Populated by JS -->
+        </div>
+        <button id="btn-all-products" class="btn-link full-width-btn" style="margin-top:10px;">All Products &gt;</button>
+      </section>
+
+      <!-- Social Section -->
+      <section class="card social-section-modern">
+        <div class="section-header">
+          <h3>SOCIAL <span class="info-icon" title="Connected social media profiles">ℹ️</span></h3>
+        </div>
+        <div id="social-icons-row" class="social-icons-row">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- View: Apps -->
+  <div id="view-apps" class="container hidden" style="background: var(--bg-color);">
+    <header class="header pink-header" style="position: sticky; top: 0; z-index: 10;">
+      <div class="logo" style="cursor: pointer;" id="btn-back-main-apps">
+        <span class="icon back-btn">←</span>
+        <h1>APPS</h1>
+      </div>
+    </header>
+    
+    <div class="detail-content" style="padding: 16px;">
+      <!-- Theme Header Card -->
+      <div style="background: #6ab04c; border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🛍</span>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="color: white; font-size: 13px;">Shopify Theme:</span>
+            <span id="apps-view-theme-name" style="color: white; font-size: 15px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">Detecting...</span>
+          </div>
+        </div>
+        <button id="btn-use-theme-apps" style="background: white; color: #6ab04c; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+          🛍 Use Theme
+        </button>
+      </div>
+
+      <!-- Apps Grid Container -->
+      <div style="position: relative; padding-left: 14px;">
+        <div style="width: 4px; background: linear-gradient(to bottom, #6ab04c, #a8e063); border-radius: 4px; position: absolute; left: 0; top: 0; height: 100%;"></div>
+        <div id="apps-grid-container" style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Categories injected via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View: Traffic Full -->
+  <div id="view-traffic" class="container hidden">
+    <header class="header pink-header">
+      <div class="logo" style="cursor: pointer;" id="btn-back-main">
+        <span class="icon back-btn">←</span>
+        <h1>WEBSITE TRAFFIC</h1>
+      </div>
+    </header>
+    
+    <div class="detail-content">
+      <!-- Social Icons Row -->
+      <div id="social-row" class="social-row">
+        <!-- Populated dynamically by JS with only detected social accounts -->
+      </div>
+
+      <!-- Key Metrics Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Avg. Monthly Visits</span>
+          <span id="metric-visits" class="metric-value">-</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Monthly Change</span>
+          <span id="metric-change" class="metric-value">-</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Avg. Visit Duration</span>
+          <span id="metric-duration" class="metric-value">-</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Bounce Rate</span>
+          <span id="metric-bounce" class="metric-value">-</span>
+        </div>
+        <div class="metric-card" style="grid-column: span 2;">
+          <span class="metric-label">Pages per Visit</span>
+          <span id="metric-pages" class="metric-value">-</span>
+        </div>
+      </div>
+
+      <!-- Monthly Visits Chart -->
+      <section class="card chart-card" style="padding:16px;">
+        <h3 style="margin:0 0 16px;font-size:14px;font-weight:700;color:#333;">Monthly Visits</h3>
+        <div id="monthly-visits-chart" style="width:100%;height:200px;position:relative;"></div>
+      </section>
+
+      <!-- Traffic Sources -->
+      <section class="card chart-card">
+        <h3>Traffic Sources</h3>
+        <div id="traffic-sources-chart" class="bar-chart-container"></div>
+      </section>
+
+      <!-- Social Distribution -->
+      <section class="card chart-card">
+        <h3>Social Distribution</h3>
+        <div id="social-donut-chart" class="donut-chart-container"></div>
+      </section>
+
+      <!-- Geo Targeting -->
+      <section class="card chart-card">
+        <h3>Top Countries</h3>
+        <ul id="geo-list" class="geo-list"></ul>
+      </section>
+    </div>
+  </div>
+
+  <!-- View: Ads Full -->
+  <div id="view-ads" class="container hidden">
+    <header class="header pink-header">
+      <div class="logo" style="cursor: pointer;" id="btn-back-main-ads">
+        <span class="icon back-btn">←</span>
+        <h1>AD CAMPAIGNS</h1>
+      </div>
+    </header>
+    
+    <div class="detail-content">
+      <div class="tabs-container">
+        <button class="tab-btn active" data-platform="google">GOOGLE (5)</button>
+        <button class="tab-btn" data-platform="facebook">FACEBOOK (30)</button>
+        <button class="tab-btn" data-platform="instagram">INSTAGRAM (30)</button>
+      </div>
+      
+      <div id="ads-list-container" class="ads-list-container">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- View: History Full -->
+  <div id="view-history" class="container hidden">
+    <header class="header pink-header">
+      <div class="logo" style="cursor: pointer;" id="btn-back-main-history">
+        <span class="icon back-btn">←</span>
+        <h1>HISTORY</h1>
+      </div>
+      <button id="btn-clear-history" class="header-action-btn">Clear</button>
+    </header>
+    
+    <div class="detail-content">
+      <div id="history-list-container" class="history-list-container">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- View: Tracked Full -->
+  <div id="view-tracked" class="container hidden">
+    <header class="header pink-header">
+      <div class="logo" style="cursor: pointer;" id="btn-back-main-tracked">
+        <span class="icon back-btn">←</span>
+        <h1>TRACKED SHOPS</h1>
+      </div>
+      <div class="header-action-text"><span id="tracked-usage">0 / 5</span></div>
+    </header>
+    
+    <div class="detail-content">
+      <div class="search-bar-container">
+        <input type="text" id="search-tracked" placeholder="Shop Name" class="search-input">
+      </div>
+      <div id="tracked-list-container" class="tracked-list-container">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  <!-- View: App Discounts Full -->
+  <div id="view-discounts" class="hidden">
+    <div style="background: linear-gradient(135deg, #c94f6d, #9b59b6); 
+                color: white; padding: 14px 16px; display: flex; 
+                align-items: center; gap: 12px; font-weight: 700; 
+                font-size: 15px; letter-spacing: 0.5px;">
+      <span id="btn-back-discounts" style="cursor:pointer; font-size:18px;">←</span>
+      APP DISCOUNTS
+    </div>
+    <div style="display: flex; gap: 0;">
+      <div style="width: 4px; background: linear-gradient(#c94f6d, #9b59b6); 
+                  border-radius: 4px; flex-shrink: 0;"></div>
+      <div id="discounts-list-container" style="flex:1; padding: 12px; 
+           display: grid; grid-template-columns: 1fr 1fr; 
+           gap: 10px; overflow-y: auto; max-height: 520px;">
+      </div>
+    </div>
+  </div>
+
+  <script src="utils.js"></script>
+  <script src="traffic.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

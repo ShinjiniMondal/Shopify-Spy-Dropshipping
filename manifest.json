@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "StoreSight - Real Shopify Insights",
+  "version": "1.0.1",
+  "description": "Analyze Shopify stores and present real, verifiable insights. Clean UI, fast performance.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.shopify.com/*",
+    "https://*.supabase.co/*",
+    "https://api.anthropic.com/*",
+    "https://*/*",
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Analyze Store"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
